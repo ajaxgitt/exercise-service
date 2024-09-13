@@ -1,19 +1,26 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import List
 
-# class UserCreate(BaseModel):
-#     username:str
-#     password:str
-#     email:Optional[str] = None
+# class Pregunta(BaseModel):
+#     texto: str
+#     opciones: List[str]
+#     respuesta_correcta: str
     
-# class LoginData(BaseModel):
-#     username: str
-#     password: str
+    
+class ModuloCreate(BaseModel):
+    id_user: int
+    nombre: str
+    teoria: str
+    quiz: List 
 
 
-# class UserUpdate(BaseModel):
-#     bio: Optional[str] = None
-#     occupation: Optional[str] = None
-#     profile_photo: Optional[str] = None
+
+class CapituloCreate(BaseModel):
+    title: str
+    problema: str
+    solucion: str
+    pista: str
+    descripcion_code: str
+    modulo_id: int
     
     

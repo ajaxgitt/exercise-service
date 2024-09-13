@@ -1,37 +1,35 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON
-from datetime import datetime
-from .database import Base
-from .database import engine
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, JSON, Text
+from sqlalchemy.orm import relationship
+from .database import Base, engine
 
-class User(Base):
-    __tablename__ = "users"  
+class Modulo(Base):
+    __tablename__ = "modulos"
     
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(255), unique=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=True)
-    password = Column(String(255))
-    #para saber si el usuario es administrador
-    is_admin = Column(Boolean, default=False)
-    #cuando se creo la cuenta
-    created_at = Column(DateTime, default=datetime.utcnow)
-    # ultima conexion
-    last_active_at = Column(DateTime, default=datetime.utcnow)
-    # 'en linea?
-    is_online = Column(Boolean, default=False)
-    # monedas
-    virtual_coins = Column(Integer, default=0)
-    #racha actual
-    current_streak = Column(Integer, default=0)
-    # Historial de rachas
-    streak_history = Column(JSON, default=[])
-    bio = Column(String(255), nullable=True)
-    occupation = Column(String(255), nullable=True)
-    profile_photo = Column(String(255), nullable=True)
-    level = Column(String(50), default="Novato")
+    id = Column(Integer,primary_key=True, index=True)
+    nombre = Column(String(255), unique=True, index=True)
+    id_user = Column(Integer, index=True) 
+    teoria = Column(Text)
+    quiz = Column(JSON, default=[])
+    completado = Column(Boolean, default=False)
+    
+    
+    
+    
+    capitulos = relationship("Capitulo", back_populates="modulo")
 
+class Capitulo(Base):
+    __tablename__ = "capitulos"
 
-User.metadata.create_all(bind=engine)
+    id = Column(Integer, primary_key=True)
+    title = Column(String(255), index=True)
+    problema = Column(Text)
+    solucion = Column(String(255), index=True)
+    pista = Column(String(255), index=True)
+    descripcion_code = Column(Text)
+    modulo_id = Column(Integer, ForeignKey("modulos.id"))
+    completado = Column(Boolean, default=False)
+    
 
+    modulo = relationship("Modulo", back_populates="capitulos")
 
-
-
+Base.metadata.create_all(bind=engine)
