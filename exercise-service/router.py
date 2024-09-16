@@ -2,63 +2,76 @@ from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
 from .database import SessionLocal
 from .models import Modulo, Capitulo
-from .schemas import ModuloCreate , CapituloCreate 
+from .schemas import (ModuloCreate , CapituloCreate , ProgresoUser,
+                      ModuloResponse, ModuloSchema)
+from typing import List
 from fastapi import APIRouter
 from . database import SessionLocal
 import json
 
  
-
 problems = APIRouter()
-
 def get_db():
     db = SessionLocal()
     try:
-        yield db
+        yield db    
     finally:
         db.close()
-        
+
+@problems.get("/api/modulo/{modulo_id}")
+def get_modulo(modulo_id:int, db:Session = Depends(get_db)):
+    
+    db_modulo = db.query(Modulo).filter(Modulo.id == modulo_id).first()
+    if db_modulo is None:
+        return HTTPException(status_code=404, detail="Modulo no encontrado ")
+    
+    return db_modulo
+
+@problems.get("/api/modulos/", response_model=List[ModuloSchema])
+def get_modulos(db: Session = Depends(get_db)):
+    """Obtiene todos los módulos de la base de datos"""
+    modulos = db.query(Modulo).all()
+    return modulos
+
+
 
 @problems.post("/api/modulo/", response_model=ModuloCreate)
-def create_modulo(modulo: ModuloCreate, db: Session = Depends(get_db)):
-
-    
-    
-    db_modelo = Modulo(
-        id_user = modulo.id_user,
+def create_modulo(modulo:ModuloCreate, db:Session = Depends(get_db)):
+    """funcion para crear un nuevo modulo"""
+    nuevo_modulo = Modulo(
         nombre = modulo.nombre,
         teoria = modulo.teoria,
-        quiz =  modulo.quiz
-        )
-    
-    db.add(db_modelo)
-    db.commit()
-    
-    return db_modelo
+        quiz = [x.dict() for x in modulo.quiz])
 
+    db.add(nuevo_modulo)
+    db.commit()
+    db.refresh(nuevo_modulo)    
+
+    return nuevo_modulo
 
 
 @problems.post("/api/capitulo/", response_model=CapituloCreate)
-def create_capitulo(capitulo: CapituloCreate, db: Session = Depends(get_db)):
-    # Verifica si la unidad asociada existe
-    modulo = db.query(Modulo).filter(Modulo.id == capitulo.modulo_id).first()
-    if not modulo:
-        raise HTTPException(status_code=404, detail="Modulo not found")
-
-    # Crear un nuevo nivel
-    db_capitulo = Capitulo(
-        title=capitulo.title,
+def create_capitulo(capitulo:CapituloCreate, db:Session = Depends(get_db)):
+    """funcion para crear un nuevo capitulo"""
+    buscar_modulo = db.query(Modulo).filter(Modulo.id == capitulo.modulo_id).first()
+    print(f"este es el modulo {buscar_modulo}")
+    if buscar_modulo is None:
+        raise HTTPException(status_code=404, detail="Modulo no encontrado ")
+    
+    nuevo_capitulo = Capitulo(
+        modulo_id = capitulo.modulo_id,
+        nombre_capitulo = capitulo.nombre_capitulo,
         problema = capitulo.problema,
-        solucion = capitulo.solucion,
         pista = capitulo.pista,
-        descripcion_code = capitulo.descripcion_code,
-        modulo_id = capitulo.modulo_id
-    )
+        solucion = capitulo.solucion)
     
-    # Añadir el nivel a la base de datos
-    db.add(db_capitulo)
+    db.add(nuevo_capitulo)
     db.commit()
-    # db.refresh(db_level)
+    db.refresh(nuevo_capitulo)
     
-    return db_capitulo
+    return nuevo_capitulo
+
+# @problems.get('/api/progreso/', response_model=ProgresoUser)
+# def get_progreso_user()
+
 
