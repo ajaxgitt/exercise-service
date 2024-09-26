@@ -16,31 +16,12 @@ class ModelQuiz(BaseModel):
     
 
 
-class DatosModel(BaseModel):
-    modulo_id: int
-    completado: bool
-    fecha: str  
 
-    @classmethod
-    def create(cls, modulo_id: int, completado: bool):
-        return cls(
-            modulo_id=modulo_id,
-            completado=completado,
-            fecha=datetime.now().isoformat()  
-        )
-
-class ModulosCompletados(BaseModel):
-    datos: List[DatosModel]  
-
-
-
-    
-    
+#schema para crear un nuevo modulo    
 class ModuloCreate(BaseModel):
     nombre: str
     teoria: str
     quiz: List[Pregunta]
-
 
 class CapituloShema(BaseModel):
     id:int
@@ -50,6 +31,9 @@ class CapituloShema(BaseModel):
     pista: str
     solucion: str
     
+    
+
+#schema para crear un nuevo capitulo
 class CapituloCreate(BaseModel):
     modulo_id: int
     nombre_capitulo: str
@@ -60,7 +44,6 @@ class CapituloCreate(BaseModel):
 
 
 class CapituloShema(BaseModel):
-    id:int
     modulo_id: int
     nombre_capitulo: str
     problema: str
@@ -69,14 +52,7 @@ class CapituloShema(BaseModel):
 
 
 
-class ModuloSchema(BaseModel):
-    id: int
-    nombre: str
-    capitulos: List[CapituloShema]
-    
-    class Config:
-        orm_mode = True
-        
+
 
         
 class ModuloResponse(ModuloCreate):
@@ -84,20 +60,20 @@ class ModuloResponse(ModuloCreate):
     class Config:
         orm_mode = True
         
-class CreateUser(BaseModel):
-    id: int
-    id_usuario_externo: int
-   
+        
+
+class DatosModelo(BaseModel):
+    modulo_id: int
+    completado: bool
 
 
-
-class ProgresoUser(BaseModel):
-    id: int
-    id_usuario_externo: int
-    modulos_completados : List[ModuloSchema]
-    capitulos_completados : List[ModuloSchema]
+class DatosCapitulo(BaseModel):
+    id : int
+    modulo_id: int
+    nombre_capitulo: str
     
-    
+
+
     
     
     
@@ -105,3 +81,49 @@ class ModuloSchemaid(BaseModel):
     quiz: List[Pregunta]
     
     
+# schema para verificar los modulos terminados
+class HistoryModel(BaseModel):
+    usuario_id:int 
+    modulo_id: int
+    fecha_completado: datetime
+    estado: bool
+    calificacion:int
+    
+    
+# schema para crear los modulos terminados
+class CreateHistoryModel(BaseModel):
+    modulo_id: int
+    estado: bool
+    calificacion : int
+    
+    
+#historial modelos id
+
+class Hismodel(BaseModel):
+    modulo_id : int
+    usuario_id : int
+    fecha_completado : datetime
+    estado : bool
+    calificacion : int
+    
+    class Config:
+        orm_mode = True
+        
+class Hismodel2(BaseModel):
+    usuario_id : int
+    fecha_completado : datetime
+    estado : bool
+    calificacion : int
+    
+    class Config:
+        orm_mode = True
+    
+    
+class ModuloSchema(BaseModel):
+    id: int
+    nombre: str
+    historial:List[Hismodel2]
+    capitulos: List[DatosCapitulo]
+    
+    class Config:
+        orm_mode = True

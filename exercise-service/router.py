@@ -1,17 +1,14 @@
 from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
 from .database import SessionLocal
-from .models import Modulo, Capitulo, ProgresoUsuario
+from .models import Modulo, Capitulo, HistorialModelos
 from .schemas import *
-# from .schemas import (ModuloCreate , CapituloCreate , ProgresoUser,CreateUser,CapituloShema,
-#                        ModelQuiz,ModuloSchema)
+
 
 from fastapi import  HTTPException
 from typing import List
 from fastapi import APIRouter
-from . database import SessionLocal
 from .services import verify_token
-from datetime import datetime
 
 
 
@@ -24,11 +21,60 @@ def get_db():
         db.close()
 
 
+
+@problems.get('/api/id/{token}')
+def token_id(token:str):
+    """funcion para obtener el id del usuario usando el token"""
+    id_user = verify_token(token=token)
+    return int(id_user['sub'])
+
 @problems.get("/api/modulos/", response_model=List[ModuloSchema])
 def get_modulos(db: Session = Depends(get_db)):
     """Obtiene todos los módulos de la base de datos"""
     modulos = db.query(Modulo).all()
     return modulos
+
+
+@problems.get("/api/modulos/user/{token}", response_model=List[ModuloSchema])
+def get_modulos_user(token: str, db: Session = Depends(get_db)):
+    """funcion para obtener a todos los modelos y el avance usando el token del usuario"""
+    
+    id_user = verify_token(token=token)
+    id_token = int(id_user['sub'])
+    
+    modulos = db.query(Modulo).all()  
+    
+    result = []
+    for modulo in modulos:
+        historial_usuario = [
+            Hismodel2(
+                usuario_id=histo.usuario_id,
+                fecha_completado=histo.fecha_completado,
+                estado=histo.estado,
+                calificacion=histo.calificacion
+            )
+            for histo in modulo.historial if histo.usuario_id == id_token
+        ]
+        
+        capitulos = [
+            DatosCapitulo(
+                id = capitulo.id,
+                modulo_id= capitulo.modulo_id,
+                nombre_capitulo= capitulo.nombre_capitulo
+            )
+            for capitulo in modulo.capitulos  
+        ]
+
+
+        result.append(ModuloSchema(
+            id=modulo.id,
+            nombre=modulo.nombre,
+            historial=historial_usuario,
+            capitulos=capitulos
+        ))
+
+    return result
+
 
 
 
@@ -97,84 +143,52 @@ def create_capitulo(capitulo:CapituloCreate, db:Session = Depends(get_db)):
     return nuevo_capitulo
 
 
-@problems.put('/api/complete/modulo/{id_usuario_externo}/{modulo_id}')
-def update_progress_model(id_usuario_externo: int, modulo_id: int, model_update: ModulosCompletados, db: Session = Depends(get_db)):
-    """ Función para actualizar el progreso del usuario en módulos completados """
-    buscar_user = db.query(ProgresoUsuario).filter(ProgresoUsuario.id_usuario_externo == id_usuario_externo).first()
-
-    if buscar_user is None:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    print(model_update)
-
-    buscar_user.modulos_completados = model_update
-    # db.commit()
-
-    return buscar_user
+# historial del usuario en modeloss
 
 
+@problems.get('/api/historial-modulos/', response_model=List[HistoryModel])
+def get_module_history(db:Session = Depends(get_db)):
+    db_models = db.query(HistorialModelos).all()
+    return db_models
+    
 
-
-
-
-@problems.post("/api/capitulo/", response_model=CapituloCreate)
-def create_capitulo(capitulo:CapituloCreate, db:Session = Depends(get_db)):
-    """funcion para crear un nuevo capitulo"""
-    buscar_modulo = db.query(Modulo).filter(Modulo.id == capitulo.modulo_id).first()
-    if buscar_modulo is None:
-        raise HTTPException(status_code=404, detail="Modulo no encontrado ")
-
-    nuevo_capitulo = Capitulo(
-        modulo_id = capitulo.modulo_id,
-        nombre_capitulo = capitulo.nombre_capitulo,
-        problema = capitulo.problema,
-        pista = capitulo.pista,
-        solucion = capitulo.solucion)
-
-    db.add(nuevo_capitulo)
-    db.commit()
-    db.refresh(nuevo_capitulo)
-
-    return nuevo_capitulo
-
-
-@problems.get('/api/id/{token}')
-def token_id(token:str):
-    """funcion para obtener el id del usuario usando el token"""
-    id_user = verify_token(token=token)
-    return int(id_user['sub'])
-
-
-@problems.get('/api/progreso/{token}', response_model=ProgresoUser)
-def get_progreso_user(token:str, db:Session = Depends(get_db)):
-    """funcion para poder ver el progreso de un usuario externo al servivio usando el token"""
+@problems.post('/api/modulo-terminado/{token}', response_model=CreateHistoryModel)
+def create_module_history(historial:CreateHistoryModel,token:str, db:Session = Depends(get_db)):
+    """funcion para crear un historial de usuario"""
     id_user = verify_token(token=token)
     id_token = int(id_user['sub'])
+    
+    histo = db.query(HistorialModelos).filter(
+    HistorialModelos.usuario_id == id_token,
+    HistorialModelos.modulo_id == historial.modulo_id,
+    HistorialModelos.estado == True
+    ).first()
 
-    user = db.query(ProgresoUsuario).filter(ProgresoUsuario.id_usuario_externo == id_token).first()
-    if user is None:
-        raise HTTPException(status_code=404, detail="user no encontrado ")
-    return user
+    if histo:
+        raise HTTPException(status_code=400, detail="Ya resolviste este Quiz")
 
-
-
-
-@problems.post('/api/create_user/{id_user}', response_model=CreateUser)
-def create_user(id_user:int, db:Session = Depends(get_db)):
-
-    new_user = ProgresoUsuario(id_usuario_externo = id_user)
-    db.add(new_user)
+    nuevo_historial = HistorialModelos(
+        usuario_id = id_token,
+        modulo_id = historial.modulo_id,
+        estado = historial.estado,
+        calificacion = historial.calificacion
+    )
+    
+    db.add(nuevo_historial)
     db.commit()
-    db.refresh(new_user)
+    db.refresh(nuevo_historial)
+    
+    return nuevo_historial
 
-    return new_user
-
-
-
-
-
-
-
-
-
-
+@problems.get("/api/history-models/{token}", response_model=List[Hismodel])
+def get_history_user(token:str, db:Session = Depends(get_db)):
+    id_user = verify_token(token=token)
+    id_token = int(id_user['sub'])
+    
+    db_ser = db.query(HistorialModelos).filter(HistorialModelos.usuario_id == id_token).all()
+    
+    return db_ser
+    
+    
+ 
+ 

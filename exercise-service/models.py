@@ -1,20 +1,44 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, JSON, Text
-from sqlalchemy.orm import relationship, Session
-from .database import Base, engine
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, JSON, Text, TIMESTAMP
+from sqlalchemy.orm import relationship
 from sqlalchemy import func
+from .database import Base, engine
 
+class HistorialModelos(Base):
+    __tablename__ = 'historialModelos'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, nullable=False)  
+    modulo_id = Column(Integer, ForeignKey("modulos.id"), nullable=False)
+    fecha_completado = Column(TIMESTAMP, server_default=func.now(), nullable=True) 
+    estado = Column(Boolean, default=False)
+    calificacion = Column(Integer, nullable=False)
+    
+    
+    modulo = relationship("Modulo", back_populates="historial", foreign_keys=[modulo_id])
+
+class HistorialCapitulos(Base):
+    __tablename__ = 'historialCapitulos'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, nullable=False)  
+    capitulo_id = Column(Integer, ForeignKey("capitulos.id"), nullable=False)
+    fecha_completado = Column(TIMESTAMP, server_default=func.now(), nullable=True) 
+    estado = Column(Boolean, default=False)
+    calificacion = Column(Integer, nullable=False) # es obligatorio
+
+    capitulo = relationship("Capitulo", back_populates="historial")
 
 class Modulo(Base):
     __tablename__ = "modulos"
     
-    id = Column(Integer,primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String(255), unique=True, index=True)
     teoria = Column(Text)
-    quiz = Column(JSON, default=[])    
+    quiz = Column(JSON, default=[])
+    
     capitulos = relationship("Capitulo", back_populates="modulo")
-    
-    
-        
+    historial = relationship("HistorialModelos", back_populates="modulo")
+
 class Capitulo(Base):
     __tablename__ = "capitulos"
 
@@ -27,19 +51,6 @@ class Capitulo(Base):
     solucion = Column(String(255), index=True)
     
     modulo = relationship("Modulo", back_populates="capitulos")
-
-
-class ProgresoUsuario(Base):
-    __tablename__ = "progreso_usuario"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    id_usuario_externo = Column(Integer)  
-    modulos_completados = Column(JSON, default=[])  
-    capitulos_completados = Column(JSON, default=[])  
-    
-    
-   
-    
-    
+    historial = relationship("HistorialCapitulos", back_populates="capitulo")
 
 Base.metadata.create_all(bind=engine)
