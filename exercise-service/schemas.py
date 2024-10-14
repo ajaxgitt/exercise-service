@@ -127,3 +127,12 @@ class ModuloSchema(BaseModel):
     
     class Config:
         orm_mode = True
+        
+class ModuloSchema2(BaseModel):
+    id: int
+    nombre: str
+    capitulos: List[DatosCapitulo]
+    
+    class Config:
+        orm_mode = True
+

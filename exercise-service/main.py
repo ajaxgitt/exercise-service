@@ -3,7 +3,9 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from .router import problems
 
-app = FastAPI()
+app = FastAPI(
+    title="Exercice Service"
+)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 origins = [
@@ -21,3 +23,4 @@ app.add_middleware(
 )
 
 app.include_router(problems)
+
