@@ -80,7 +80,10 @@ def get_modulos_user_id(id: int, db: Session = Depends(get_db)):
     """Función para obtener un módulo por su id y el avance usando el token del usuario"""
     
     modulo = db.query(Modulo).filter(Modulo.id == id).first()  
-    
+    if modulo is None:
+        raise HTTPException(status_code=404, detail="Modulo no encontrado ")
+        
+        
     # Crea la lista de capítulos
     capitulos = [
         DatosCapitulo(
