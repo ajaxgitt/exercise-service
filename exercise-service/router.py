@@ -35,10 +35,52 @@ def get_modulos(db: Session = Depends(get_db)):
     return modulos
 
 
+
+
+
+@problems.get("/api/modulos_for_token/{id}/{token}", response_model=ModuloSchema2, tags=['prueba'])
+def get_modulos_user_id(token:str ,id: int, db: Session = Depends(get_db)):
+    """Función para obtener un módulo por su id y el avance usando el token del usuario"""
+    id_user = verify_token(token=token)
+    id_token = int(id_user['sub'])
+    
+    print(f"este es el id del user: {id_token}")
+    
+    # nota_model = db.query(HistorialModelos).filter(HistorialModelos.modulo_id==id,HistorialModelos.usuario_id==id_token).first()
+    # if nota_model is None:
+    #     raise HTTPException(status_code=404, detail="user  no encontrado ")
+    
+    
+    modulo = db.query(Modulo).filter(Modulo.id == id).first()  
+    if modulo is None:
+        raise HTTPException(status_code=404, detail="Modulo no encontrado ")
+
+    # Crea la lista de capítulos
+    capitulos = [
+        DatosCapitulo(
+            id=capitulo.id,
+            modulo_id=capitulo.modulo_id,
+            nombre_capitulo=capitulo.nombre_capitulo
+            
+        )
+        for capitulo in modulo.capitulos  
+    ]
+    
+   
+
+    return ModuloSchema2(
+        id=modulo.id,
+        nombre=modulo.nombre,
+        capitulos=capitulos
+    )
+
+
+
+
+
 @problems.get("/api/modulos/user/{token}", response_model=List[ModuloSchema],tags=['optener'])
 def get_modulos_user(token: str, db: Session = Depends(get_db)):
     """funcion para obtener a todos los modelos y el avance usando el token del usuario"""
-    
     id_user = verify_token(token=token)
     id_token = int(id_user['sub'])
     
@@ -75,7 +117,7 @@ def get_modulos_user(token: str, db: Session = Depends(get_db)):
 
     return result
 
-@problems.get("/api/modulos/{id}", response_model=ModuloSchema2, tags=['prueba'])
+@problems.get("/api/modulos/{id}/", response_model=ModuloSchema2, tags=['prueba'])
 def get_modulos_user_id(id: int, db: Session = Depends(get_db)):
     """Función para obtener un módulo por su id y el avance usando el token del usuario"""
     
@@ -141,6 +183,7 @@ def create_modulo(modulo:ModuloCreate, db:Session = Depends(get_db)):
     nuevo_modulo = Modulo(
         nombre = modulo.nombre,
         teoria = modulo.teoria,
+        image = modulo.image,
         quiz = [x.dict() for x in modulo.quiz])
 
     db.add(nuevo_modulo)
@@ -159,8 +202,8 @@ def create_capitulo(capitulo:CapituloCreate, db:Session = Depends(get_db)):
     nuevo_capitulo = Capitulo(
         modulo_id = capitulo.modulo_id,
         nombre_capitulo = capitulo.nombre_capitulo,
-        problema = capitulo.problema,
-        pista = capitulo.pista,
+        teoria = capitulo.teoria,
+        ejercicio = capitulo.ejercicio,
         solucion = capitulo.solucion)
 
     db.add(nuevo_capitulo)
@@ -171,8 +214,6 @@ def create_capitulo(capitulo:CapituloCreate, db:Session = Depends(get_db)):
 
 
 # historial del usuario en modeloss
-
-
 @problems.get('/api/historial-modulos/', response_model=List[HistoryModel],tags=['optener'])
 def get_module_history(db:Session = Depends(get_db)):
     db_models = db.query(HistorialModelos).all()

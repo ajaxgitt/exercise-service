@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List,Optional
 from datetime import datetime
 
 
@@ -21,24 +21,25 @@ class ModelQuiz(BaseModel):
 class ModuloCreate(BaseModel):
     nombre: str
     teoria: str
+    image: Optional[str] = None
+    
     quiz: List[Pregunta]
 
 class CapituloShema(BaseModel):
     id:int
     modulo_id: int
     nombre_capitulo: str
-    problema: str
-    pista: str
+    teoria: str
+    ejercicio: str
     solucion: str
     
     
 
-#schema para crear un nuevo capitulo
 class CapituloCreate(BaseModel):
     modulo_id: int
     nombre_capitulo: str
-    problema: str
-    pista: str
+    teoria: str
+    ejercicio: str
     solucion: str
     
 
@@ -46,8 +47,8 @@ class CapituloCreate(BaseModel):
 class CapituloShema(BaseModel):
     modulo_id: int
     nombre_capitulo: str
-    problema: str
-    pista: str
+    teoria: str
+    ejercicio: str
     solucion: str
 
 
@@ -73,6 +74,11 @@ class DatosCapitulo(BaseModel):
     nombre_capitulo: str
     
 
+    
+class Historial(BaseModel):
+    id : int
+    modulo_id: int
+    calificacion: int
 
     
     
@@ -131,7 +137,10 @@ class ModuloSchema(BaseModel):
 class ModuloSchema2(BaseModel):
     id: int
     nombre: str
+    # calificacion:int
     capitulos: List[DatosCapitulo]
+    
+    
     
     class Config:
         orm_mode = True

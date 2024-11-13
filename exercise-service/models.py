@@ -37,7 +37,7 @@ class Modulo(Base):
     nombre = Column(String(255), unique=True, index=True)
     teoria = Column(Text)
     quiz = Column(JSON, default=[])
-    
+    image = Column(Text, nullable=True)
     capitulos = relationship("Capitulo", back_populates="modulo")
     historial = relationship("HistorialModelos", back_populates="modulo")
 
@@ -59,8 +59,8 @@ class Capitulo(Base):
     id = Column(Integer, primary_key=True)
     modulo_id = Column(Integer, ForeignKey("modulos.id"))
     nombre_capitulo = Column(String(255), index=True)
-    problema = Column(Text)
-    pista = Column(String(255), index=True)
+    teoria = Column(Text)
+    ejercicio = Column(Text)
     descripcion_code = Column(Text)
     solucion = Column(String(255), index=True)
     
@@ -69,3 +69,19 @@ class Capitulo(Base):
     historial = relationship("HistorialCapitulos", back_populates="capitulo")
 
 Base.metadata.create_all(bind=engine)
+
+
+# class Capitulo(Base):
+#     __tablename__ = "capitulos"
+
+#     id = Column(Integer, primary_key=True)
+#     modulo_id = Column(Integer, ForeignKey("modulos.id"))
+#     nombre_capitulo = Column(String(255), index=True)
+#     problema = Column(Text)
+#     pista = Column(String(255), index=True)
+#     descripcion_code = Column(Text)
+#     solucion = Column(String(255), index=True)
+    
+#     casos_de_prueba = relationship("TestCase", back_populates="exercise", cascade="all, delete-orphan")
+#     modulo = relationship("Modulo", back_populates="capitulos")
+#     historial = relationship("HistorialCapitulos", back_populates="capitulo")
