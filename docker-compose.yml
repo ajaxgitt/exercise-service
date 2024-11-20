@@ -6,20 +6,4 @@ services:
       - "8001:8000"
     volumes:
       - .:/code  
-    depends_on:
-      - mysql
-
-  mysql:
-    image: mysql:5.7
-    environment:
-      MYSQL_ROOT_PASSWORD: password  
-      MYSQL_DATABASE: problems
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql 
-
-volumes:
-  mysql-data:
-
 
