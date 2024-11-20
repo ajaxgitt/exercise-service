@@ -13,6 +13,7 @@ origins = [
     "http://localhost:5173",
 ]
 
+#hlii
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  
